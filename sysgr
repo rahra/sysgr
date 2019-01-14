@@ -1,0 +1,169 @@
+#!/bin/sh
+# Simple set of scripts to create system state diagrams with rrdtool.
+#
+# @author Bernhard R. Fischer
+# 
+
+# look for default config file and pull in (if exists)
+if test -e $HOME/.sysgr.conf ; then
+   . $HOME/.sysgr.conf
+fi 
+
+# path to monitoring scripts
+if test -z "$RRDSCRIPTS" ; then
+   RRDSCRIPTS=./rrdscripts
+fi
+# destination directory (for PNGs, RRDs,...)
+if test -z "$RRDHOME" ; then
+   RRDHOME=./var
+fi
+
+# RRD image dimensions
+W=600
+H=300
+
+# list of color values used. Add values here if you have more than 10 values
+# within a single diagram.
+COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3"
+
+error_exit()
+{
+   echo $1
+   rm $LOCK
+   exit 1
+}
+
+sbase=$(basename $0)
+
+# path to lock file, to prevent script from run multiple times in parallel
+LOCK=/tmp/$sbase.lock
+
+umask 022
+
+# exit if locked (if script is already executed)
+# this is to prevent a system overload in case of something got stuck and the
+# script is called by cron that it is not started over and over again.
+if test -e $LOCK ; then
+   echo "locked!"
+   exit
+fi
+touch $LOCK
+
+# create destination directory if not exists
+if test ! -d $RRDHOME ; then
+   mkdir -p $RRDHOME
+   # safety check
+   if test $? -ne 0 ; then
+      error_exit "mkdir failed"
+   fi
+fi
+
+# init HTML index file
+echo "<html><body>" >$RRDHOME/$sbase.html
+if test $? -ne 0 ; then
+   error_exit "cannot redirect to HTML file"
+fi
+
+# loop over all scripts found in RRDSCRIPTS
+for sc in $RRDSCRIPTS/*.sh
+do
+
+   RRDDATA=
+   RRDVLABEL=
+   # should be set to GAUGE oder COUNTER. GAUGE is default if empty
+   RRDVTYPE=
+   # additional options passed directly to rrdgraph
+   RRDOPTIONS=
+
+   . $sc
+
+   sc=$(basename $sc)
+   sc=${sc%%.sh}
+
+   # set default value type to GAUGE (of omitted)
+   if test -z "$RRDVTYPE" ; then
+      RRDVTYPE=GAUGE
+   fi
+
+   # simple loop counter
+   i=1
+   # variable for rrd DEF string
+   def=
+   # variable for rrd LINE string
+   line=
+
+   # loop over all values within RRDDATA
+   for ds in $RRDDATA
+   do
+      # split into name and value
+      val=${ds##*:}
+      name=${ds%%:*}
+      # delete '/' chars
+      fname=$(echo $name | tr -d /)
+      rrd=$RRDHOME/$sc-$fname.rrd
+
+      # create RRD if not exists
+      if test ! -e $rrd ; then
+         rrdtool create $rrd -s 300 \
+            DS:$fname:$RRDVTYPE:600:0:U \
+            RRA:AVERAGE:0.5:1:210816 RRA:AVERAGE:0.5:12:8784 RRA:AVERAGE:0.5:288:366
+      fi
+
+      # update RRD
+      rrdtool update $rrd N:$val
+      echo "$fname:$(date +%s):$val" >>$RRDHOME/$sbase.log
+
+      # create definition options for rrdgraph
+      defi="DEF:ds${i}=${rrd}:${fname}:AVERAGE"
+      def="$def $defi"
+      col=$(echo $COLORS | cut -d \  -f $i)
+      linei="LINE1:ds${i}${col}:${name}"
+      line="$line $linei"
+
+      # increase counter
+      i=$(($i + 1))
+   done
+
+   # set default label if it was omitted
+   if test -z "$RRDVLABEL" ; then
+      RRDVLABEL=$sc
+   fi
+
+   # create pngs for 1 7 and 28 days
+   rrdtool graph $RRDHOME/${sc}01.png -w $W -h $H \
+      --start end-1d \
+      --vertical-label "$RRDVLABEL" \
+      $RRDOPTIONS \
+      $def \
+      $line \
+      >/dev/null
+
+   rrdtool graph $RRDHOME/${sc}07.png -w $W -h $H \
+      --start end-7d \
+      --vertical-label "$RRDVLABEL" \
+      $RRDOPTIONS \
+      $def \
+      $line \
+      >/dev/null
+
+   rrdtool graph $RRDHOME/${sc}28.png -w $W -h $H \
+      --start end-28d \
+      --vertical-label "$RRDVLABEL" \
+      $RRDOPTIONS \
+      $def \
+      $line \
+      >/dev/null
+
+   # update HTML file
+   echo "<img src='${sc}01.png'/><img src='${sc}07.png'/><img src='${sc}28.png'/><br/>" >>$RRDHOME/$sbase.html
+
+done
+
+# end HTML file
+echo "</body></html>" >>$RRDHOME/$sbase.html
+
+# remove lock file end exit
+rm $LOCK
+exit 0
+
+
