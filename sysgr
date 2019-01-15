@@ -130,7 +130,7 @@ do
       val=${ds##*:}
       name=${ds%%:*}
       # delete '/' chars
-      fname=$(echo $name | tr -d /)
+      fname=$(echo $name | tr -d /.)
       rrd=$RRDHOME/$sc-$fname.rrd
 
       # create RRD if not exists
