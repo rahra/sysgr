@@ -71,6 +71,25 @@ sbase=$(basename $0)
 # path to lock file, to prevent script from run multiple times in parallel
 LOCK=/tmp/$sbase.lock
 
+# check command line parameters
+if test -n "$1" ; then
+   case $1 in
+      help)
+         cat << !
+$0 [options]
+   help ..... Output this help.
+   unlock ... Remove lock file if locked.
+!
+         exit 0
+         ;;
+
+      unlock)
+         rm -f $LOCK
+         exit 0
+         ;;
+   esac
+fi
+
 umask 022
 
 # exit if locked (if script is already executed)
