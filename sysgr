@@ -19,12 +19,13 @@ if test -z "$RRDHOME" ; then
 fi
 
 # RRD image dimensions
-W=600
-H=300
+W=800
+H=400
 
 # list of color values used. Add values here if you have more than 10 values
 # within a single diagram.
 COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3"
+
 
 error_exit()
 {
@@ -32,6 +33,38 @@ error_exit()
    rm $LOCK
    exit 1
 }
+
+
+init_html()
+{
+   echo -n >$RRDHOME/$sbase.html
+   if test $? -ne 0 ; then
+      error_exit "cannot redirect to HTML file"
+   fi
+}
+
+
+wr_html()
+{
+   echo $@ >>$RRDHOME/$sbase.html
+   if test $? -ne 0 ; then
+      error_exit "cannot redirect to HTML file"
+   fi
+}
+
+
+rrd_graph()
+{
+   rrdtool graph $RRDHOME/${sc}${1}.png -w $W -h $H \
+      --start end-${1}d \
+      --vertical-label "$RRDVLABEL" \
+      $RRDOPTIONS \
+      $def \
+      $line \
+      >/dev/null
+   wr_html "<td><a href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>"
+}
+
 
 sbase=$(basename $0)
 
@@ -59,10 +92,8 @@ if test ! -d $RRDHOME ; then
 fi
 
 # init HTML index file
-echo "<html><body>" >$RRDHOME/$sbase.html
-if test $? -ne 0 ; then
-   error_exit "cannot redirect to HTML file"
-fi
+init_html
+wr_html "<html><body>$(date)<table>"
 
 # loop over all scripts found in RRDSCRIPTS
 for sc in $RRDSCRIPTS/*.sh
@@ -130,37 +161,16 @@ do
    fi
 
    # create pngs for 1 7 and 28 days
-   rrdtool graph $RRDHOME/${sc}01.png -w $W -h $H \
-      --start end-1d \
-      --vertical-label "$RRDVLABEL" \
-      $RRDOPTIONS \
-      $def \
-      $line \
-      >/dev/null
-
-   rrdtool graph $RRDHOME/${sc}07.png -w $W -h $H \
-      --start end-7d \
-      --vertical-label "$RRDVLABEL" \
-      $RRDOPTIONS \
-      $def \
-      $line \
-      >/dev/null
-
-   rrdtool graph $RRDHOME/${sc}28.png -w $W -h $H \
-      --start end-28d \
-      --vertical-label "$RRDVLABEL" \
-      $RRDOPTIONS \
-      $def \
-      $line \
-      >/dev/null
-
-   # update HTML file
-   echo "<img src='${sc}01.png'/><img src='${sc}07.png'/><img src='${sc}28.png'/><br/>" >>$RRDHOME/$sbase.html
+   wr_html "<tr>"
+   rrd_graph 1
+   rrd_graph 7
+   rrd_graph 28
+   wr_html "</tr>"
 
 done
 
 # end HTML file
-echo "</body></html>" >>$RRDHOME/$sbase.html
+wr_html "</table></body></html>"
 
 # remove lock file end exit
 rm $LOCK
