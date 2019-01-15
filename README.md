@@ -3,6 +3,9 @@
 This is a simple tool which should work out of the box to create system state diagrams such as CPU load, disk usage, network stats, and so on. It sources further simple scripts (found in `rrdscripts/`) which actually collect the data of the system.
 Furthermore it is very easy to add own data collectors without fiddling with `rrdtool`.
 
+If you want to have a quick and easy solution to get a graphical display about
+the health of your server(s) than this script is your friend!
+
 # How To Use
 
 It depends on rrdtool, thus install the package `rrdtool` first (e.g. with apt-get).
