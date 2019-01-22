@@ -51,3 +51,22 @@ RRDDATA=nprocs:$(ps uax | wc -l | tr -d \  )
 
 `ps uax` lists all processes one on each line, `wc -l` counts the number of lines and outputs the value, `tr -d \ ` eliminates whitespaces in the string.
 
+
+The following environment variables can optionally be set by the collector scripts:
+
+```Shell
+RRDOPTIONS=
+```
+This is passed directly as options to the `rrdtool` and can contain any valid `rrdtool` options.
+
+
+```Shell
+RRDVTYPE=
+```
+This variable defines the type of the variable(s) according to the `rrdtool`. This is either `GAUGE` which is default or `COUNTER`. `GAUGE` is used if the variable is an absolute value, e.g. such as the system load. `COUNTER` is used if the variable is an ever increasing value, e.g. the number of bytes transmitted on a network interface.
+
+```Shell
+RRDVLABEL=
+```
+This sets the label on the vertical (y) axis of the diagram. By default the name of the script is used.
+
