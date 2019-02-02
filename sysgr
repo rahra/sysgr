@@ -47,7 +47,7 @@ error_exit()
 
 init_html()
 {
-   echo -n >$RRDHOME/$sbase.html
+   echo "<!DOCTYPE html>" >$RRDHOME/$sbase.html
    if test $? -ne 0 ; then
       error_exit "cannot redirect to HTML file"
    fi
@@ -72,7 +72,7 @@ rrd_graph()
       $def \
       $line \
       >/dev/null
-   wr_html "<td><a data-fancybox='gallery' href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>\n"
+   wr_html "<td><a data-fancybox='gallery' href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>"
 }
 
 
@@ -122,20 +122,20 @@ fi
 
 # init HTML index file
 init_html
-wr_html "<!DOCTYPE html>\n
-   <html>\n
-      <head>\n
+wr_html "
+   <html>
+      <head>
          <title>$HOSTNAME system health</title>
-         <script src='//code.jquery.com/jquery-3.3.1.min.js'></script>\n
-         <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css'/>\n
-         <script src='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.js'></script>\n
-         <meta http-equiv='refresh' content='300'/>\n
-         <meta name='author' content='sysgr by Bernhard R. Fischer'/>\n
-         <meta charset='UTF-8'>\n
-      </head>\n
-      <body>\n
-      $(date)\n
-      <table>\n"
+         <script src='//code.jquery.com/jquery-3.3.1.min.js'></script>
+         <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css'/>
+         <script src='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.js'></script>
+         <meta http-equiv='refresh' content='300'/>
+         <meta name='author' content='sysgr by Bernhard R. Fischer'/>
+         <meta charset='UTF-8'>
+      </head>
+      <body>
+      $(date)
+      <table>"
 
 # loop over all scripts found in RRDSCRIPTS
 for sc in $RRDSCRIPTS/*.sh
