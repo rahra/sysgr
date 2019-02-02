@@ -11,7 +11,8 @@ fi
 
 # path to monitoring scripts
 if test -z "$RRDSCRIPTS" ; then
-   RRDSCRIPTS=./rrdscripts
+   fpath=$(dirname $(realpath $0))
+   RRDSCRIPTS=$fpath/rrdscripts
 fi
 # destination directory (for PNGs, RRDs,...)
 if test -z "$RRDHOME" ; then
@@ -161,8 +162,8 @@ do
       # split into name and value
       val=${ds##*:}
       name=${ds%%:*}
-      # delete '/' chars
-      fname=$(echo $name | tr -d /.)
+      # delete [/.] chars, squeeze [-], truncate to 19 bytes (required by rrdtool DS format)
+      fname=$(echo $name | tr -d /. | tr -s - | head -c 19)
       rrd=$RRDHOME/$sc-$fname.rrd
 
       # create RRD if not exists
