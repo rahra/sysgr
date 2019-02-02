@@ -8,7 +8,15 @@
 if test -e $HOME/.sysgr.conf ; then
    . $HOME/.sysgr.conf
 fi 
-
+# check for availability of rrdtool
+if test -z "$RRDTOOL" ; then
+   RRDTOOL=rrdtool
+fi
+which $RRDTOOL >/dev/null
+if test $? -ne 0 ; then
+   echo "rrdtool seems not to be missing. Please install rrdtool!"
+   exit 1
+fi
 # path to monitoring scripts
 if test -z "$RRDSCRIPTS" ; then
    fpath=$(dirname $(realpath $0))
@@ -57,7 +65,7 @@ wr_html()
 
 rrd_graph()
 {
-   rrdtool graph $RRDHOME/${sc}${1}.png -w $W -h $H \
+   $RRDTOOL graph $RRDHOME/${sc}${1}.png -w $W -h $H \
       --start end-${1}d \
       --vertical-label "$RRDVLABEL" \
       $RRDOPTIONS \
@@ -126,6 +134,7 @@ wr_html "<!DOCTYPE html>\n
          <meta charset='UTF-8'>\n
       </head>\n
       <body>\n
+      $(date)\n
       <table>\n"
 
 # loop over all scripts found in RRDSCRIPTS
@@ -168,13 +177,13 @@ do
 
       # create RRD if not exists
       if test ! -e $rrd ; then
-         rrdtool create $rrd -s 300 \
+         $RRDTOOL create $rrd -s 300 \
             DS:$fname:$RRDVTYPE:600:0:U \
             RRA:AVERAGE:0.5:1:210816 RRA:AVERAGE:0.5:12:8784 RRA:AVERAGE:0.5:288:366
       fi
 
       # update RRD
-      rrdtool update $rrd N:$val
+      $RRDTOOL update $rrd N:$val
       echo "$fname:$(date +%s):$val" >>$RRDHOME/$sbase.log
 
       # create definition options for rrdgraph
