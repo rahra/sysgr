@@ -26,6 +26,7 @@ H=400
 # within a single diagram.
 COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3"
 
+HOSTNAME=$(hostname -f)
 
 error_exit()
 {
@@ -62,7 +63,7 @@ rrd_graph()
       $def \
       $line \
       >/dev/null
-   wr_html "<td><a href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>"
+   wr_html "<td><a data-fancybox='gallery' href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>\n"
 }
 
 
@@ -112,7 +113,19 @@ fi
 
 # init HTML index file
 init_html
-wr_html "<html><body>$(date)<table>"
+wr_html "<!DOCTYPE html>\n
+   <html>\n
+      <head>\n
+         <title>$HOSTNAME system health</title>
+         <script src='//code.jquery.com/jquery-3.3.1.min.js'></script>\n
+         <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css'/>\n
+         <script src='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.js'></script>\n
+         <meta http-equiv='refresh' content='300'/>\n
+         <meta name='author' content='sysgr by Bernhard R. Fischer'/>\n
+         <meta charset='UTF-8'>\n
+      </head>\n
+      <body>\n
+      <table>\n"
 
 # loop over all scripts found in RRDSCRIPTS
 for sc in $RRDSCRIPTS/*.sh
