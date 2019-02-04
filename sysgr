@@ -8,7 +8,15 @@
 if test -e $HOME/.sysgr.conf ; then
    . $HOME/.sysgr.conf
 fi 
-
+# check for availability of rrdtool
+if test -z "$RRDTOOL" ; then
+   RRDTOOL=rrdtool
+fi
+which $RRDTOOL >/dev/null
+if test $? -ne 0 ; then
+   echo "rrdtool seems not to be missing. Please install rrdtool!"
+   exit 1
+fi
 # path to monitoring scripts
 if test -z "$RRDSCRIPTS" ; then
    fpath=$(dirname $(realpath $0))
@@ -27,6 +35,7 @@ H=400
 # within a single diagram.
 COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3"
 
+HOSTNAME=$(hostname -f)
 
 error_exit()
 {
@@ -38,7 +47,7 @@ error_exit()
 
 init_html()
 {
-   echo -n >$RRDHOME/$sbase.html
+   echo "<!DOCTYPE html>" >$RRDHOME/$sbase.html
    if test $? -ne 0 ; then
       error_exit "cannot redirect to HTML file"
    fi
@@ -56,14 +65,14 @@ wr_html()
 
 rrd_graph()
 {
-   rrdtool graph $RRDHOME/${sc}${1}.png -w $W -h $H \
+   $RRDTOOL graph $RRDHOME/${sc}${1}.png -w $W -h $H \
       --start end-${1}d \
       --vertical-label "$RRDVLABEL" \
       $RRDOPTIONS \
       $def \
       $line \
       >/dev/null
-   wr_html "<td><a href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>"
+   wr_html "<td><a data-fancybox='gallery' href='${sc}${1}.png'><img width='400' src='${sc}${1}.png' alt='$RRDVLABEL-${1}d'/></a></td>"
 }
 
 
@@ -113,7 +122,20 @@ fi
 
 # init HTML index file
 init_html
-wr_html "<html><body>$(date)<table>"
+wr_html "
+   <html>
+      <head>
+         <title>$HOSTNAME system health</title>
+         <script src='//code.jquery.com/jquery-3.3.1.min.js'></script>
+         <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.css'/>
+         <script src='https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.6/dist/jquery.fancybox.min.js'></script>
+         <meta http-equiv='refresh' content='300'/>
+         <meta name='author' content='sysgr by Bernhard R. Fischer'/>
+         <meta charset='UTF-8'>
+      </head>
+      <body>
+      $(date)
+      <table>"
 
 # loop over all scripts found in RRDSCRIPTS
 for sc in $RRDSCRIPTS/*.sh
@@ -155,13 +177,13 @@ do
 
       # create RRD if not exists
       if test ! -e $rrd ; then
-         rrdtool create $rrd -s 300 \
+         $RRDTOOL create $rrd -s 300 \
             DS:$fname:$RRDVTYPE:600:0:U \
             RRA:AVERAGE:0.5:1:210816 RRA:AVERAGE:0.5:12:8784 RRA:AVERAGE:0.5:288:366
       fi
 
       # update RRD
-      rrdtool update $rrd N:$val
+      $RRDTOOL update $rrd N:$val
       echo "$fname:$(date +%s):$val" >>$RRDHOME/$sbase.log
 
       # create definition options for rrdgraph
