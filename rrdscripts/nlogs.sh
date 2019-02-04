@@ -1,6 +1,6 @@
 # count number of changed log entries in log files
 
-logs="/var/log/messages /var/log/maillog /var/log/kern.log /var/log/syslog"
+logs="/var/log/messages /var/log/maillog /var/log/mail.log /var/log/kern.log /var/log/syslog"
 tmp="/tmp"
 
 RRDDATA=
