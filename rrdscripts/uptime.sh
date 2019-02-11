@@ -11,6 +11,9 @@ if test "$ts" = "min," ; then
    else
       tm=0
    fi
+else
+   # in case it is neither 'days' nor 'min' but 'hh::mm'
+   tm=$(echo $tm | cut -d : -f 1)
 fi
 
 RRDDATA="uptime:$tm"
