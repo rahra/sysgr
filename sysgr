@@ -169,10 +169,10 @@ do
    for ds in $RRDDATA
    do
       # split into name and value
-      val=${ds##*:}
-      name=${ds%%:*}
+      val=$(echo "$ds" | perl -ne 'if (/^.*:([0-9.]+)$/){print "$1\n";}')
+      name=$(echo "$ds" | perl -ne 'if (/^(.*):[0-9.]+$/){$n=$1;$n=~s/:/-/g;print "$n\n";}')
       # delete [/.] chars, squeeze [-], truncate to 19 bytes (required by rrdtool DS format)
-      fname=$(echo $name | tr -d /. | tr -s - | head -c 19)
+      fname=$(echo $name | tr /. - | tr -s - | head -c 19)
       rrd=$RRDHOME/$sc-$fname.rrd
 
       # create RRD if not exists
