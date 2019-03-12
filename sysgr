@@ -33,7 +33,7 @@ H=400
 
 # list of color values used. Add values here if you have more than 10 values
 # within a single diagram.
-COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3"
+COLORS="#00ff00 #0000ff #ffb000 #ff0000 #ff00ff #00ffff #8FBC8F #8B0000 #556B2F #9400D3 #CD5C5C #F0E68C #87CEFA #66CDAA #9ACD32"
 
 HOSTNAME=$(hostname -f)
 
