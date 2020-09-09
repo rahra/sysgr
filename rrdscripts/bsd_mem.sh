@@ -1,4 +1,8 @@
 
+if test $(uname -o) != "FreeBSD" ; then
+   exit 0
+fi
+
 i=0
 for e in $(top |grep -Em2 '^(Mem|Swap):' | tr -d ,K | perl -pe 's/M/000/g')
 do
