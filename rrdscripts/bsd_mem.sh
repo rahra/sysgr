@@ -4,7 +4,7 @@ if test $(uname -o) != "FreeBSD" ; then
 fi
 
 i=0
-for e in $(top |grep -Em2 '^(Mem|Swap):' | tr -d ,K | perl -pe 's/M/000/g')
+for e in $(top |grep -Em2 '^(Mem|Swap):' | tr -d , | perl -pe 's/M/000000/g;s/K/000/g;')
 do
    eval e_$i=$e
    i=$(( $i + 1 ))
