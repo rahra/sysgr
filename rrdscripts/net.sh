@@ -10,6 +10,7 @@ fi
 RRDVLABEL="Netstats"
 RRDVTYPE=COUNTER
 RRDDATA=
+#RRDOPTIONS="--logarithmic --units=si"
 
 # loop over all interfaces (listed in iflist)
 for if in $iflist
